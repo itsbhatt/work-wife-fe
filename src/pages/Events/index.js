@@ -1,40 +1,64 @@
-import { useState } from 'react';
+import Axios from 'axios';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CloseIcon from '@mui/icons-material/Close';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ControlPointIcon from '@mui/icons-material/ControlPoint';
 
+import CreateEventModal from './components/CreateModal';
 import Table from '../../components/Table';
-import AlertDialog from '../../components/Dialog';
-import { exampleData, headCells } from './constants';
-import { FormControl, Grid, InputLabel, MenuItem, Select, TextField } from '@mui/material';
-import DateTimePicker from '../../components/DateTimePicker';
-
+import { headCells } from './constants';
+import { Alert, Snackbar } from '@mui/material';
+import BackdropLoader from '../../components/BackdropLoader';
 
 const EventsPage = () => {
-  const [isCreateEventDialogOpen, setCreateEventDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    status: '',
+  const [snackbarData, setSnackbarData] = useState({
+    open: false,
+    message: 'Saved Successfully',
+    type: 'success'
   });
-  const [loading, setLoading] = useState(false);
-  const [errorToDisplay, setErrorToDisplay] = useState(null);
-  const [errors] = useState(false);
 
-  const onSave = () => {
-    console.log('Saved');
+  const [isCreateEventDialogOpen, setCreateEventDialogOpen] = useState(false);
+  const [data, setData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [backdropLoading, setBackdropLoading] = useState(false);
+
+  useEffect(() => {
+    fetchData()
+  },[]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await Axios.get('/read_tasks');
+      setData(res.data);
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      handleOpenSnackbar({
+        open: true,
+        message: 'Something went wrong',
+        type: 'error',
+      });
+      setLoading(false);
+    }
   }
 
-  const onCancel = () => {
+  const onCreateModalCancel = (type, payload) => {
     setCreateEventDialogOpen(false);
-  };
 
-  const handleChange = (e) => {
-    setFormData(oldData => ({ ...oldData, [e.target.name]: e.target.value}));
-  };
+    if(type === 'fetch') {
+      fetchData();
+    } else if(type === 'add') {
+      setData((oldState) => ({ ...oldState, Items: [ payload,...data.Items] }))
+    }
+  }
 
-  const onClearFilter = (type) => () => {
-    setFormData({ ...formData, [type]: '' });
+  const handleOpenSnackbar = (data) => {
+    setSnackbarData(data)
+  }
+
+  const handleBackdropLoading = (isOpen) => {
+    setBackdropLoading(isOpen)
   }
 
   return (
@@ -44,43 +68,33 @@ const EventsPage = () => {
           Create Event
         </Button>
       </Box>
-      <Table columns={headCells} data={exampleData} title="Events"/>
+      <Table
+        title="Events"
+        loading={loading}
+        columns={headCells}
+        setLoading={setLoading}
+        data={data.Items || []}
+        handleOpenSnackbar={handleOpenSnackbar}
+      />
 
-      <AlertDialog
-        title={'Create Event'}
-        onSave={onSave}
-        onCancel={onCancel}
+      <CreateEventModal
+        loading={backdropLoading}
         open={isCreateEventDialogOpen}
+        onCancel={onCreateModalCancel}
+        handleOpenSnackbar={handleOpenSnackbar}
+        handleBackdropLoading={handleBackdropLoading}
+      />
+
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        open={snackbarData.open}
+        autoHideDuration={4000}
+        onClose={() => handleOpenSnackbar({ open: false })}
       >
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <FormControl sx={{ mt: 2, width: '100%' }}>
-              <TextField name="event_name" id="outlined-basic" label="Event Name" variant="outlined" onChange={handleChange}/>
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl sx={{ mt: 2, width: '100%' }}>
-              <TextField name="source" id="outlined-basic" label="Source Name" variant="outlined" onChange={handleChange} />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl sx={{ mt: 2, width: '100%' }}>
-              <DateTimePicker name="trigger_time" label="Trigger Time" onChange={handleChange} />
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <FormControl sx={{ mt: 2, width: '100%' }}>
-              <TextField
-                name="payload"
-                label="Payload"
-                multiline
-                rows={4}
-                onChange={handleChange}
-              />
-            </FormControl>
-          </Grid>
-        </Grid>
-      </AlertDialog>
+        <Alert severity={snackbarData.type}>{snackbarData.message}</Alert>
+      </Snackbar>
+
+      <BackdropLoader open={backdropLoading} handleClose={() => handleBackdropLoading(false)}/>
     </>
   )
 }
