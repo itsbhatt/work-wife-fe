@@ -1,70 +1,66 @@
-import * as React from 'react';
+import { useState } from 'react';
+import Axios from 'axios';
+import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
+import Paper from '@mui/material/Paper';
+import Switch from '@mui/material/Switch';
+import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 
 import TableToolbar from './components/TableToolbar';
 import TableHeader from './components/TableHeader';
+import { CircularProgress, Radio } from '@mui/material';
+
+const parseData = (type, data) => {
+  if (type === 'dateTime') {
+    return dayjs(data).format('DD/MM/YYYY hh:mm A')
+  }
+  return data;
+}
 
 const TableWrapper = (props) => {
-  const { title, columns, data } = props;
-  const [selected, setSelected] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
-  const [rowsPerPage] = React.useState(5);
+  const { title, columns, data, handleOpenSnackbar, loading, setLoading } = props;
+  const [page] = useState(0);
+  const [rowsPerPage] = useState(5);
+  const [dense, setDense] = useState(false);
+  const [selected, setSelected] = useState('');
 
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelected = data.map((n) => n.event_name);
-      setSelected(newSelected);
-      return;
-    }
-    setSelected([]);
+  const deselectOnClick = () => {
+    setSelected('');
   };
 
   const handleClick = (_, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1),
-      );
-    }
-
-    setSelected(newSelected);
+    setSelected(name);
   };
-
-  const handleChangePage = (_, newPage) => {
-    setPage(newPage);
-  };
-
-  // const handleChangeRowsPerPage = (event) => {
-  //   setRowsPerPage(parseInt(event.target.value, 10));
-  //   setPage(0);
-  // };
 
   const handleChangeDense = (event) => {
     setDense(event.target.checked);
   };
 
-  const isSelected = (name) => selected.indexOf(name) !== -1;
+  const onDelete = async () => {
+    const payloadData = data.find(col => col.trigger_time === selected);
+    try {
+      await Axios.post('/delete_task', {
+        event_id: payloadData.event_id,
+        trigger_time: payloadData.trigger_time,
+      });
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+
+      handleOpenSnackbar({
+        open: true,
+        message: 'YaY!! Feature coming soon!',
+        type: 'info',
+      });
+    }
+  }
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
@@ -73,36 +69,44 @@ const TableWrapper = (props) => {
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <TableToolbar title={title} numSelected={selected.length} />
+        <TableToolbar title={title} numSelected={selected ? 1 : 0} onDelete={onDelete} />
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
             size={dense ? 'small' : 'medium'}
           >
             <TableHeader
-              numSelected={selected.length}
+              numSelected={selected ? 1 : 0}
               columns={columns}
-              onSelectAllClick={handleSelectAllClick}
+              deselectOnClick={deselectOnClick}
               rowCount={data.length}
             />
             <TableBody>
+              {data.length === 0 && loading && (
+                <TableRow sx={{ width: '100%'}}>
+                  <TableCell colSpan={7}>
+                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignContent: 'center', minHeight: 250 }}>
+                      <CircularProgress sx={{ alignSelf: 'center' }} color="primary" />
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
               {data.map((row, index) => {
-                const isItemSelected = isSelected(row.event_name);
-                const labelId = `enhanced-table-checkbox-${row.event_name}-${index}`;
+                const labelId = `enhanced-table-checkbox-${row.trigger_time}-${index}`;
                 return (
                   <TableRow
                     hover
-                    onClick={(event) => handleClick(event, row.event_name)}
+                    onClick={(event) => handleClick(event, row.trigger_time)}
                     role="checkbox"
-                    aria-checked={isItemSelected}
+                    aria-checked={row.trigger_time === selected}
                     tabIndex={-1}
-                    key={row.event_name}
-                    selected={isItemSelected}
+                    key={row.trigger_time}
+                    selected={row.trigger_time === selected}
                   >
                     <TableCell padding="checkbox">
-                      <Checkbox
+                      <Radio
                         color="primary"
-                        checked={isItemSelected}
+                        checked={row.trigger_time === selected}
                         inputProps={{
                           'aria-labelledby': labelId,
                         }}
@@ -117,7 +121,7 @@ const TableWrapper = (props) => {
                           padding="none"
                           key={row[col.id]}
                         >
-                          {row[col.id]}
+                          {parseData(col.type, row[col.id])}
                         </TableCell>
                       );
                     })}
@@ -136,15 +140,6 @@ const TableWrapper = (props) => {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10]}
-          component="div"
-          count={data.length}
-          rowsPerPage={10}
-          page={page}
-          onPageChange={handleChangePage}
-          // onRowsPerPageChange={handleChangeRowsPerPage}
-        />
       </Paper>
       <FormControlLabel
         control={<Switch checked={dense} onChange={handleChangeDense} />}

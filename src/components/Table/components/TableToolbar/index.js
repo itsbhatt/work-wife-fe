@@ -10,7 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FilterMenu from '../Filters';
 
 const TableToolbar = (props) => {
-  const { title, numSelected } = props;
+  const { title, numSelected, onDelete } = props;
 
   return (
     <Toolbar
@@ -46,7 +46,7 @@ const TableToolbar = (props) => {
       {numSelected > 0 ? (
         <Tooltip title="Delete">
           <IconButton>
-            <DeleteIcon />
+            <DeleteIcon onClick={onDelete}/>
           </IconButton>
         </Tooltip>
       ) : (

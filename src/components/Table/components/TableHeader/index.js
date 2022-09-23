@@ -5,22 +5,23 @@ import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 
-
 const TableHeader = (props) => {
   const {
-    columns, onSelectAllClick, numSelected, rowCount,
+    columns, deselectOnClick, numSelected, rowCount,
   } = props;
 
   return (
     <TableHead>
       <TableRow>
         <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-          />
+          {numSelected ? (
+            <Checkbox
+              color="primary"
+              indeterminate
+              checked={rowCount > 0 && numSelected === rowCount}
+              onChange={deselectOnClick}
+            />
+          ) : null}
         </TableCell>
         {columns.map((headCell) => (
           <TableCell
