@@ -1,12 +1,12 @@
 import * as React from 'react';
-import Button from '@mui/material/Button';
+import LoadingButton from '@mui/lab/LoadingButton';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
 const AlertDialog = (props) => {
-  const { open, handleOpenClose, title, children, onCancel, onSave } = props;
+  const { open, handleOpenClose, title, children, onCancel, onSave, loading } = props;
 
   const handleClose = () => {
     handleOpenClose(false);
@@ -28,10 +28,10 @@ const AlertDialog = (props) => {
         {children}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button variant="outlined" onClick={onCancel} sx={{ mx: 2 }}>Cancel</Button>
-        <Button variant="contained" onClick={onSave} autoFocus>
+        <LoadingButton variant="outlined" onClick={onCancel} sx={{ mx: 2 }}>Cancel</LoadingButton>
+        <LoadingButton variant="contained" onClick={onSave} autoFocus loading={loading}>
           Save
-        </Button>
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );
