@@ -5,12 +5,12 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 const DateTimePickerWrapper = (props) => {
-  const { value, label, name, onChange } = props;
+  const { value, label, name, onChange, error } = props;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DateTimePicker
-        renderInput={(props) => <TextField {...props} />}
+        renderInput={(props) => <TextField {...props} error={error} />}
         label={label}
         value={value}
         onChange={(val) => onChange({ target : { name, value: val }})}
