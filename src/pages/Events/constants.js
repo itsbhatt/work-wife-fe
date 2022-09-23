@@ -32,6 +32,7 @@ export const headCells = [
   {
     id: 'actual_trigger_time',
     numeric: false,
+    type: 'dateTime',
     disablePadding: true,
     label: 'Trigger Time',
   },
@@ -55,41 +56,5 @@ export const exampleData = [
     event_name: 'expire_deal 2',
     payload: "{'test': 'hello', 'deal_id': '1234'}",
     status: 'pending',
-  },
-];
-
-export const dialogConfig = [
-  {
-    key: 'event_name',
-    name: 'event_name',
-    label: 'Event Name',
-    type: 'text',
-    clearable: true,
-    mandatory: true,
-    autoComplete: 'off',
-    inputType: 'textFields',
-    errorText: 'This field accepts only alphabets',
-  },
-  {
-    key: 'dateOfBirth',
-    name: 'dateOfBirth',
-    type: 'text',
-    label: 'DOB',
-    views: ['date'],
-    mandatory: true,
-    iconPosition: 'end',
-    format: 'dd/MM/yyyy',
-    maxDate: new Date(new Date().setFullYear(new Date().getFullYear() - 21)),
-    inputType: 'picker',
-  },
-  {
-    key: 'addressLine1',
-    name: 'addressLine1',
-    label: 'Address Line 1',
-    mandatory: true,
-    type: 'text',
-    clearable: true,
-    autoComplete: 'off',
-    inputType: 'textFields',
   },
 ];
